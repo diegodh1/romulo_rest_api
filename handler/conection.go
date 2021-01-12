@@ -6,6 +6,7 @@ import (
 
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 //Config struct
@@ -36,7 +37,7 @@ func (c *Config) Connect() (*gorm.DB, error) {
 		c.Database,
 	)
 
-	db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})
 	if err != nil {
 		return nil, err
 	}
