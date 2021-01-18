@@ -22,6 +22,12 @@ type AppUser struct {
 	CreactionDate time.Time
 }
 
+//User struct
+type User struct {
+	User     AppUser
+	Profiles []AppUserProfile
+}
+
 //AppUserProfile struct
 type AppUserProfile struct {
 	UserID       string

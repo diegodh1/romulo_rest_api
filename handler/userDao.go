@@ -83,7 +83,6 @@ func encryptPass(stringToEncrypt string) (encryptedString string) {
 func CreateToken(userid string) (string, error) {
 	var err error
 	//Creating Access Token
-	os.Setenv("ACCESS_SECRET", "jdnfksdmfksd") //this should be in an env file
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
 	atClaims["user_id"] = userid
@@ -121,12 +120,14 @@ func LoginUser(userID string, password string, db *gorm.DB) Response {
 		}
 		profiles := getProfiles(userID, db)
 		var payload struct {
+			User     AppUser
 			Token    string
 			Profiles []AppUserProfile
 		}
 		//profiles of the user and token
 		payload.Token = token
 		payload.Profiles = profiles
+		payload.User = userApp
 		//return
 		return Response{Payload: payload, Message: "OK", Status: 200}
 	}
@@ -134,7 +135,8 @@ func LoginUser(userID string, password string, db *gorm.DB) Response {
 }
 
 //CreateUser create a new user in the db
-func CreateUser(user *AppUser, db *gorm.DB) Response {
+func CreateUser(user *AppUser, profiles *[]AppUserProfile, db *gorm.DB) Response {
+
 	switch {
 	case user.UserID == "":
 		return Response{Payload: nil, Message: "El ID de usuario es obligatorio", Status: 400}
@@ -145,6 +147,8 @@ func CreateUser(user *AppUser, db *gorm.DB) Response {
 	case user.Email == "" || !strings.Contains(user.Email, "@"):
 		return Response{Payload: nil, Message: "El correo es obligatorio", Status: 4000}
 	default:
+		user.Name = strings.ToUpper(user.Name)
+		user.LastName = strings.ToUpper(user.LastName)
 		user.CreactionDate = time.Now()
 		user.Password = encryptPass(user.Password)
 		if err := db.Create(&user).Error; err != nil {
@@ -153,12 +157,15 @@ func CreateUser(user *AppUser, db *gorm.DB) Response {
 			}
 			return Response{Payload: nil, Message: "No se pudo crear el registro", Status: 500}
 		}
-		return Response{Payload: nil, Message: "Registro Realizado!", Status: 200}
+		for _, v := range *profiles {
+			assignProfile(&v, db)
+		}
+		return Response{Payload: nil, Message: "Registro Realizado!", Status: 201}
 	}
 }
 
 //UpdateUser function
-func UpdateUser(user *AppUser, db *gorm.DB) Response {
+func UpdateUser(user *AppUser, profiles *[]AppUserProfile, db *gorm.DB) Response {
 	switch {
 	case user.UserID == "":
 		return Response{Payload: nil, Message: "El ID de usuario es obligatorio", Status: 400}
@@ -170,15 +177,24 @@ func UpdateUser(user *AppUser, db *gorm.DB) Response {
 		if err := db.Model(&user).Omit("UserID", "Password", "CreactionDate").Where("user_id = ?", user.UserID).Updates(user).Error; err != nil {
 			return Response{Payload: nil, Message: "No se pudo crear el registro", Status: 500}
 		}
+		for _, v := range *profiles {
+			assignProfile(&v, db)
+		}
 		return Response{Payload: nil, Message: "Actualización Realizada!", Status: 200}
 	}
 }
 
+//SearchUser struct
+func SearchUser(userID string, db *gorm.DB) Response {
+	var appUser AppUser
+	var profiles []AppUserProfile
+	db.Where("user_id = ?", userID).First(&appUser)
+	db.Where("user_id = ?", userID, true).Find(&profiles)
+	return Response{Payload: User{User: appUser, Profiles: profiles}, Message: "OK", Status: 200}
+}
+
 //AssignProfile func
-func AssignProfile(profile *AppUserProfile, db *gorm.DB) Response {
+func assignProfile(profile *AppUserProfile, db *gorm.DB) {
 	profile.CreationDate = time.Now()
-	if err := db.Where("user_id = ?", profile.UserID).Save(profile).Error; err != nil {
-		return Response{Payload: nil, Message: "No se pudo asignar el perfil", Status: 500}
-	}
-	return Response{Payload: nil, Message: "Operación realizada!", Status: 200}
+	db.Where("user_id = ? and profile_id = ?", profile.UserID, profile.ProfileID).Save(profile)
 }

@@ -43,7 +43,7 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 //CreateUser func
 func CreateUser(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
-		var user handler.AppUser
+		var user handler.User
 		err := c.BindJSON(&user)
 		switch {
 		case err != nil:
@@ -51,7 +51,7 @@ func CreateUser(db *gorm.DB) gin.HandlerFunc {
 				"payload": nil, "message": "petición mal estructurada", "status": 400,
 			})
 		default:
-			response := handler.CreateUser(&user, db)
+			response := handler.CreateUser(&user.User, &user.Profiles, db)
 			c.JSON(400, gin.H{
 				"payload": response.Payload,
 				"message": response.Message,
@@ -64,7 +64,7 @@ func CreateUser(db *gorm.DB) gin.HandlerFunc {
 
 //UpdateUser func
 func UpdateUser(db *gorm.DB) gin.HandlerFunc {
-	var user handler.AppUser
+	var user handler.User
 	fn := func(c *gin.Context) {
 		err := c.BindJSON(&user)
 		switch {
@@ -75,38 +75,13 @@ func UpdateUser(db *gorm.DB) gin.HandlerFunc {
 				"status":  400,
 			})
 		default:
-			response := handler.UpdateUser(&user, db)
+			response := handler.UpdateUser(&user.User, &user.Profiles, db)
 			c.JSON(response.Status, gin.H{
 				"payload": response.Payload,
 				"message": response.Message,
 				"status":  response.Status,
 			})
 		}
-	}
-	return fn
-}
-
-//AssignProfile func
-func AssignProfile(db *gorm.DB) gin.HandlerFunc {
-	fn := func(c *gin.Context) {
-		var profile handler.AppUserProfile
-		err := c.BindJSON(&profile)
-		switch {
-		case err != nil:
-			c.JSON(400, gin.H{
-				"payload": nil,
-				"message": "Petición mal estructurada",
-				"status":  400,
-			})
-		default:
-			response := handler.AssignProfile(&profile, db)
-			c.JSON(response.Status, gin.H{
-				"payload": response.Payload,
-				"message": response.Message,
-				"status":  response.Status,
-			})
-		}
-
 	}
 	return fn
 }
@@ -119,6 +94,21 @@ func SearchClient(db *gorm.DB) gin.HandlerFunc {
 		name := c.Param("name")
 		name = strings.ToUpper(strings.ReplaceAll(name, "%", ""))
 		response := handler.SearchClient(name, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//SearchUser func
+func SearchUser(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		userID := c.Param("userID")
+		userID = strings.ToUpper(strings.ReplaceAll(userID, "%", ""))
+		response := handler.SearchUser(userID, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
