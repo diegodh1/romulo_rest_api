@@ -57,5 +57,6 @@ func main() {
 	r.GET("/user/search/:userID", routes.SearchUser(db))
 	r.GET("/client/search/:name", routes.SearchClient(db))
 	r.GET("/client/info/:nit", routes.GetInfoClient(db))
+	r.POST("/client/create", routes.CreateClient(db))
 	r.Run(":4000")
 }

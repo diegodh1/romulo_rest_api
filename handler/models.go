@@ -36,6 +36,16 @@ type AppUserProfile struct {
 	CreationDate time.Time
 }
 
+type ClientApp struct {
+	TipoDoc  string
+	NroDoc   string
+	Nombre   string
+	Apellido string
+	Correo   string
+	Telefono string
+	Ciudad   string
+}
+
 //ClienteContactosErp struct
 type ClienteContactosErp struct {
 	NitCC     string
