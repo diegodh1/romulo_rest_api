@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	handler "romulo/handler"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -68,7 +69,7 @@ func CreateUser(db *gorm.DB) gin.HandlerFunc {
 func enviarCorreo(correo string, tipoDoc string, nroDoc string, name string, lastName string, cellphone string, phone string, dir string, routesF []string) bool {
 	from := "noreply-ventas@calzadoromulo.com.co"
 	pass := "Temporal.2021@"
-	to := "diegodiazh1994@gmail.com"
+	to := "ventas@calzadoromulo.com"
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", from)
@@ -136,8 +137,8 @@ func CreateClient(db *gorm.DB) gin.HandlerFunc {
 		routesF := []string{}
 		for _, file := range files {
 			// Upload the file to specific dst.
-			c.SaveUploadedFile(file, "C:/profilePhotos/"+nroDoc+"-"+file.Filename+".pdf")
-			routesF = append(routesF, "C:/profilePhotos/"+nroDoc+"-"+file.Filename+".pdf")
+			c.SaveUploadedFile(file, "C:/profilePhotos/"+nroDoc+"-"+file.Filename)
+			routesF = append(routesF, "C:/profilePhotos/"+nroDoc+"-"+file.Filename)
 		}
 		tipoDoc := c.PostForm("tipoDoc")
 		name := c.PostForm("name")
@@ -195,7 +196,7 @@ func UpdateUser(db *gorm.DB) gin.HandlerFunc {
 func SearchClient(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		name := c.Param("name")
-		name = strings.ToUpper(strings.ReplaceAll(name, "%", ""))
+		name = strings.ToUpper(strings.ReplaceAll(name, "%", " "))
 		response := handler.SearchClient(name, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
@@ -206,12 +207,81 @@ func SearchClient(db *gorm.DB) gin.HandlerFunc {
 	return fn
 }
 
+//SearchItem func
+func SearchItem(db *gorm.DB) gin.HandlerFunc {
+	var item handler.ItemsVenta
+	fn := func(c *gin.Context) {
+		err := c.BindJSON(&item)
+		switch {
+		case err != nil:
+			c.JSON(400, gin.H{
+				"payload": nil,
+				"message": "petición mal estructurada",
+				"status":  400,
+			})
+		default:
+			item.DescripcionErp = strings.ToUpper(item.DescripcionErp)
+			response := handler.SearchItem(item.DescripcionErp, db)
+			c.JSON(response.Status, gin.H{
+				"payload": response.Payload,
+				"message": response.Message,
+				"status":  response.Status,
+			})
+		}
+	}
+	return fn
+}
+
 //SearchUser func
 func SearchUser(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		userID := c.Param("userID")
 		userID = strings.ToUpper(strings.ReplaceAll(userID, "%", ""))
 		response := handler.SearchUser(userID, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetExt1 func
+func GetExt1(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		ext1 := c.Param("ext1")
+		v, err := strconv.Atoi(ext1)
+		if err != nil {
+			c.JSON(400, gin.H{
+				"payload": nil,
+				"message": "petición mal estructurada",
+				"status":  400,
+			})
+		}
+		response := handler.GetExt1(v, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetExt2 func
+func GetExt2(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		ext2 := c.Param("ext2")
+		v, err := strconv.Atoi(ext2)
+		if err != nil {
+			c.JSON(400, gin.H{
+				"payload": nil,
+				"message": "petición mal estructurada",
+				"status":  400,
+			})
+		}
+		response := handler.GetExt2(v, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,

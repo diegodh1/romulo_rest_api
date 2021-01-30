@@ -36,6 +36,7 @@ type AppUserProfile struct {
 	CreationDate time.Time
 }
 
+//ClientApp struct
 type ClientApp struct {
 	TipoDoc  string
 	NroDoc   string
@@ -59,4 +60,31 @@ type ClienteContactosErp struct {
 type ClienteErp struct {
 	NombreTercero string
 	NitTercero    string
+}
+
+//ItemsVenta Struct
+type ItemsVenta struct {
+	CodigoErp      int
+	DescripcionErp string
+	F120Referencia string
+}
+
+//ItemsExtension1 Struct
+type ItemsExtension1 struct {
+	CodigoErp       int
+	Referencia      string
+	Descripcion     string
+	F117Descripcion string
+	FechaCreado     time.Time
+	F117ID          string
+}
+
+//ItemsExtension2 Struct
+type ItemsExtension2 struct {
+	CodigoErp       int
+	Referencia      string
+	Descripcion     string
+	F119Descripcion string
+	FechaCreado     time.Time
+	IDExt2          string
 }

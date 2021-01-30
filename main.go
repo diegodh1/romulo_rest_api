@@ -58,5 +58,8 @@ func main() {
 	r.GET("/client/search/:name", routes.SearchClient(db))
 	r.GET("/client/info/:nit", routes.GetInfoClient(db))
 	r.POST("/client/create", routes.CreateClient(db))
-	r.Run(":4000")
+	r.POST("/pedido/search/item", routes.SearchItem(db))
+	r.GET("/pedido/get/color/:ext1", routes.GetExt1(db))
+	r.GET("/pedido/get/talla/:ext2", routes.GetExt2(db))
+	r.Run(":5000")
 }
