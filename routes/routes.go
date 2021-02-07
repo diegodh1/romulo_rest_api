@@ -236,8 +236,20 @@ func SearchItem(db *gorm.DB) gin.HandlerFunc {
 func SearchUser(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		userID := c.Param("userID")
-		userID = strings.ToUpper(strings.ReplaceAll(userID, "%", ""))
 		response := handler.SearchUser(userID, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetColecciones func
+func GetColecciones(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		response := handler.GetColecciones(db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
@@ -291,11 +303,63 @@ func GetExt2(db *gorm.DB) gin.HandlerFunc {
 	return fn
 }
 
+//GetPuntosDeEnvio func
+func GetPuntosDeEnvio(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		nit := c.Param("nit")
+		response := handler.GetPuntosEnvios(nit, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
 //GetInfoClient func
 func GetInfoClient(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		nit := c.Param("nit")
 		response := handler.GetPersonalInfo(nit, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//SavePedido func
+func SavePedido(db *gorm.DB) gin.HandlerFunc {
+	var pedido handler.Pedido
+	fn := func(c *gin.Context) {
+		err := c.BindJSON(&pedido)
+		switch {
+		case err != nil:
+			c.JSON(400, gin.H{
+				"payload": nil,
+				"message": "petición mal estructurada",
+				"status":  400,
+			})
+		default:
+			response := handler.SavePedidoErp(&pedido, db)
+			c.JSON(response.Status, gin.H{
+				"payload": response.Payload,
+				"message": response.Message,
+				"status":  response.Status,
+			})
+		}
+	}
+	return fn
+}
+
+//GetItemsFotos func
+func GetItemsFotos(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		tempo := c.Param("temporada")
+		response := handler.GetItemsFotos(tempo, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,

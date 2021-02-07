@@ -61,5 +61,9 @@ func main() {
 	r.POST("/pedido/search/item", routes.SearchItem(db))
 	r.GET("/pedido/get/color/:ext1", routes.GetExt1(db))
 	r.GET("/pedido/get/talla/:ext2", routes.GetExt2(db))
+	r.GET("/pedido/get/puntos/:nit", routes.GetPuntosDeEnvio(db))
+	r.POST("/pedido/crear", routes.SavePedido(db))
+	r.GET("/catalogo/get/fotos/:temporada", routes.GetItemsFotos(db))
+	r.GET("/catalogo/get/colecciones", routes.GetColecciones(db))
 	r.Run(":5000")
 }
