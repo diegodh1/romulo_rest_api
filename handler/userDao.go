@@ -134,6 +134,35 @@ func LoginUser(userID string, password string, db *gorm.DB) Response {
 
 }
 
+//UpdateUser function
+func UpdateUser(user *AppUser, profiles *[]AppUserProfile, db *gorm.DB) Response {
+	switch {
+	case user.UserID == "":
+		return Response{Payload: nil, Message: "El ID de usuario es obligatorio", Status: 400}
+	case user.Name == "":
+		return Response{Payload: nil, Message: "El nombre es obligatorio", Status: 400}
+	case user.Email == "" || !strings.Contains(user.Email, "@"):
+		return Response{Payload: nil, Message: "El correo es obligatorio", Status: 400}
+	default:
+		if err := db.Model(&user).Omit("UserID", "Password", "CreactionDate").Where("user_id = ?", user.UserID).Updates(user).Error; err != nil {
+			return Response{Payload: nil, Message: "No se pudo crear el registro", Status: 500}
+		}
+		for _, v := range *profiles {
+			assignProfile(&v, db)
+		}
+		return Response{Payload: nil, Message: "Actualización Realizada!", Status: 200}
+	}
+}
+
+//SearchUser struct
+func SearchUser(userID string, db *gorm.DB) Response {
+	var appUser AppUser
+	var profiles []AppUserProfile
+	db.Where("user_id = ?", userID).First(&appUser)
+	db.Where("user_id = ?", userID, true).Find(&profiles)
+	return Response{Payload: User{User: appUser, Profiles: profiles}, Message: "OK", Status: 200}
+}
+
 //CreateUser create a new user in the db
 func CreateUser(user *AppUser, profiles *[]AppUserProfile, db *gorm.DB) Response {
 
@@ -162,35 +191,6 @@ func CreateUser(user *AppUser, profiles *[]AppUserProfile, db *gorm.DB) Response
 		}
 		return Response{Payload: nil, Message: "Registro Realizado!", Status: 201}
 	}
-}
-
-//UpdateUser function
-func UpdateUser(user *AppUser, profiles *[]AppUserProfile, db *gorm.DB) Response {
-	switch {
-	case user.UserID == "":
-		return Response{Payload: nil, Message: "El ID de usuario es obligatorio", Status: 400}
-	case user.Name == "":
-		return Response{Payload: nil, Message: "El nombre es obligatorio", Status: 400}
-	case user.Email == "" || !strings.Contains(user.Email, "@"):
-		return Response{Payload: nil, Message: "El correo es obligatorio", Status: 400}
-	default:
-		if err := db.Model(&user).Omit("UserID", "Password", "CreactionDate").Where("user_id = ?", user.UserID).Updates(user).Error; err != nil {
-			return Response{Payload: nil, Message: "No se pudo crear el registro", Status: 500}
-		}
-		for _, v := range *profiles {
-			assignProfile(&v, db)
-		}
-		return Response{Payload: nil, Message: "Actualización Realizada!", Status: 200}
-	}
-}
-
-//SearchUser struct
-func SearchUser(userID string, db *gorm.DB) Response {
-	var appUser AppUser
-	var profiles []AppUserProfile
-	db.Where("user_id = ?", userID).First(&appUser)
-	db.Where("user_id = ?", userID, true).Find(&profiles)
-	return Response{Payload: User{User: appUser, Profiles: profiles}, Message: "OK", Status: 200}
 }
 
 //AssignProfile func

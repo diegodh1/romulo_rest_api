@@ -66,10 +66,10 @@ func CreateUser(db *gorm.DB) gin.HandlerFunc {
 	return gin.HandlerFunc(fn)
 }
 
-func enviarCorreo(correo string, tipoDoc string, nroDoc string, name string, lastName string, cellphone string, phone string, dir string, routesF []string) bool {
+func enviarCorreo(correo string, tipoDoc string, nroDoc string, name string, lastName string, cellphone string, phone string, dir string, ciudad string, pais string, routesF []string) bool {
 	from := "noreply-ventas@calzadoromulo.com.co"
 	pass := "Temporal.2021@"
-	to := "ventas@calzadoromulo.com"
+	to := "hernando.gaitan@integrapps.com "
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", from)
@@ -96,8 +96,12 @@ func enviarCorreo(correo string, tipoDoc string, nroDoc string, name string, las
 	<td>Celular</td>
 	<td>Tel&eacute;fono</td>
 	<td>Direccion</td>
+	<td>Ciudad</td>
+	<td>Pais</td>
 	</tr>
 	<tr>
+	<td>%s</td>
+	<td>%s</td>
 	<td>%s</td>
 	<td>%s</td>
 	<td>%s</td>
@@ -111,7 +115,7 @@ func enviarCorreo(correo string, tipoDoc string, nroDoc string, name string, las
 	</table>
 	<p>Muchas Gracias,</p>
 	<p>PD: ajunto documentos</p></body>
-	</html>`, correo, tipoDoc, nroDoc, name, lastName, cellphone, phone, dir))
+	</html>`, correo, tipoDoc, nroDoc, name, lastName, cellphone, phone, dir, ciudad, pais))
 
 	for i := 0; i < len(routesF); i++ {
 		_, err := os.Open(routesF[i])
@@ -147,7 +151,9 @@ func CreateClient(db *gorm.DB) gin.HandlerFunc {
 		celphone := c.PostForm("cellphone")
 		phone := c.PostForm("phone")
 		dir := c.PostForm("dir")
-		enviado := enviarCorreo(email, tipoDoc, nroDoc, name, lastName, celphone, phone, dir, routesF)
+		ciudad := c.PostForm("ciudad")
+		pais := c.PostForm("pais")
+		enviado := enviarCorreo(email, tipoDoc, nroDoc, name, lastName, celphone, phone, dir, ciudad, pais, routesF)
 		switch {
 		case enviado:
 			c.JSON(200, gin.H{
@@ -195,9 +201,9 @@ func UpdateUser(db *gorm.DB) gin.HandlerFunc {
 //SearchClient func
 func SearchClient(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
-		name := c.Param("name")
-		name = strings.ToUpper(strings.ReplaceAll(name, "%", " "))
-		response := handler.SearchClient(name, db)
+		id := c.Param("id")
+		id = strings.ToUpper(strings.ReplaceAll(id, "%", " "))
+		response := handler.SearchClient(id, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
@@ -262,7 +268,7 @@ func GetColecciones(db *gorm.DB) gin.HandlerFunc {
 //GetExt1 func
 func GetExt1(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
-		ext1 := c.Param("ext1")
+		ext1 := c.Param("code")
 		v, err := strconv.Atoi(ext1)
 		if err != nil {
 			c.JSON(400, gin.H{
@@ -271,7 +277,8 @@ func GetExt1(db *gorm.DB) gin.HandlerFunc {
 				"status":  400,
 			})
 		}
-		response := handler.GetExt1(v, db)
+		list := c.Param("list")
+		response := handler.GetExt1(v, list, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
@@ -284,8 +291,8 @@ func GetExt1(db *gorm.DB) gin.HandlerFunc {
 //GetExt2 func
 func GetExt2(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
-		ext2 := c.Param("ext2")
-		v, err := strconv.Atoi(ext2)
+		code := c.Param("code")
+		v, err := strconv.Atoi(code)
 		if err != nil {
 			c.JSON(400, gin.H{
 				"payload": nil,
@@ -293,7 +300,54 @@ func GetExt2(db *gorm.DB) gin.HandlerFunc {
 				"status":  400,
 			})
 		}
-		response := handler.GetExt2(v, db)
+		list := c.Param("list")
+		ext1 := c.Param("ext1")
+		response := handler.GetExt2(v, list, ext1, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetFolders func
+func GetFolders(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		response := handler.GetFolders()
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetPhotos func
+func GetPhotos(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		folder := c.Param("folder")
+		folder = strings.ReplaceAll(folder, "%", " ")
+		response := handler.GetPhotos(folder)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetPhotoBase64 func
+func GetPhotoBase64(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		folder := c.Param("folder")
+		folder = strings.ReplaceAll(folder, "%", " ")
+		photo := c.Param("photo")
+		photo = strings.ReplaceAll(photo, "%", " ")
+		response := handler.GetPhotoBase64(folder, photo, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
@@ -365,6 +419,60 @@ func GetItemsFotos(db *gorm.DB) gin.HandlerFunc {
 			"message": response.Message,
 			"status":  response.Status,
 		})
+	}
+	return fn
+}
+
+//GetCarteraCliente func
+func GetCarteraCliente(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		nit := c.Param("nit")
+		sucursal := c.Param("sucursal")
+		response := handler.GetCarteraCliente(nit, sucursal, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetSaldoCliente func
+func GetSaldoCliente(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		nit := c.Param("nit")
+		sucursal := c.Param("sucursal")
+		response := handler.GetSaldoCliente(nit, sucursal, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetPedidoERP func
+func GetPedidoERP(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		pedido := c.Param("pedido")
+		v, err := strconv.Atoi(pedido)
+		switch {
+		case err != nil:
+			c.JSON(400, gin.H{
+				"payload": nil,
+				"message": "petición mal estructurada",
+				"status":  400,
+			})
+		default:
+			response := handler.GetPedidoERP(v, db)
+			c.JSON(response.Status, gin.H{
+				"payload": response.Payload,
+				"message": response.Message,
+				"status":  response.Status,
+			})
+		}
 	}
 	return fn
 }

@@ -78,7 +78,7 @@ type ItemsVentaErp struct {
 	Descripcion string
 	Ext1        string
 	Ext2        string
-	PrecioUnt   string
+	PrecioUnt   float32
 	UndPrecio   string
 	Ext1Color   string
 }
@@ -101,6 +101,7 @@ type ClientesPuntosEnvioErp struct {
 	IDSucursal     string
 	IDVendedor     string
 	PuntoEnvio     string
+	IDListaPrecio  string
 }
 
 //PedidoErp Struct
@@ -124,17 +125,17 @@ type Pedido struct {
 type PedidoErpDet struct {
 	PvcCotNum          int
 	PvcDetFechaEntrega string
-	PvcDetCant         int
+	PvcDetCant         float32
 	PvcDetNota         string
 	PvcDetReferencia   string
 	PvcDetExt1         string
 	PvcDetExt2         string
-	PvcDetPrecioUnt    int
+	PvcDetPrecioUnt    float32
 }
 
 //ConsecPedido Struct
 type ConsecPedido struct {
-	ConsecutivoPedido *int
+	ConsecutivoPedido int
 	Descripcion       string
 }
 
@@ -165,4 +166,21 @@ type CategoriaItem struct {
 	Descripcion string
 	Year        int
 	Activo      bool
+}
+
+//CarteraClientesErp Struct
+type CarteraClientesErp struct {
+	Nit        string
+	IDSucursal string
+	NoDoc      int
+	FechaVence *time.Time
+	Saldo      float32
+}
+
+//SucursalesErp struct
+type SucursalesErp struct {
+	NitTercero             string
+	F201IDSucursal         string
+	F201IndEstadoBloqueado int
+	CupoCredito            float32
 }
