@@ -20,17 +20,23 @@ func SearchItem(desc string, db *gorm.DB) Response {
 }
 
 //GetExt1 by cod
-func GetExt1(codigo int, idListaPrecio string, db *gorm.DB) Response {
+func GetExt1(codigo int, idListaPrecio, bodega string, db *gorm.DB) Response {
 	items := []ItemsVentaErp{}
-	db.Distinct("ext1, ext1_color").Where("codigo_erp = ? and id_lista_precio = ?", codigo, idListaPrecio).Find(&items)
+	db.Distinct("ext1, ext1_color").Where("codigo_erp = ? and id_lista_precio = ? and f150_id = ?", codigo, idListaPrecio, bodega).Find(&items)
 	return Response{Payload: items, Message: "OK", Status: 200}
 }
 
 //GetExt2 by cod
-func GetExt2(codigo int, idListaPrecio string, ext1 string, db *gorm.DB) Response {
+func GetExt2(codigo int, idListaPrecio string, ext1 string, bodega string, db *gorm.DB) Response {
 	items := []ItemsVentaErp{}
-	db.Where("codigo_erp = ? and id_lista_precio = ? and ext1 = ?", codigo, idListaPrecio, ext1).Find(&items)
+	db.Where("codigo_erp = ? and id_lista_precio = ? and ext1 = ? and f150_id = ?", codigo, idListaPrecio, ext1, bodega).Find(&items)
 	return Response{Payload: items, Message: "OK", Status: 200}
+}
+
+func GetBodegas(userID string, db *gorm.DB) Response {
+	bodegas := []appVendedorBodega{}
+	db.Where("f200_id like ?", userID+" %").Find(&bodegas)
+	return Response{Payload: bodegas, Message: "OK", Status: 200}
 }
 
 //GetPuntosEnvios fuc
@@ -144,15 +150,14 @@ func GetPhotoBase64(folder string, photo string, db *gorm.DB) Response {
 
 	// Encode as base64.
 	encoded := base64.StdEncoding.EncodeToString(content)
-	item := getItemVentaERP(photo, db)
 	data := struct {
 		Base64      string
 		Descripcion string
 		Precio      float32
 	}{
 		encoded,
-		item.Descripcion,
-		item.PrecioUnt,
+		"",
+		0,
 	}
 	return Response{Payload: data, Message: "OK", Status: 200}
 }
@@ -168,30 +173,33 @@ func getItemVentaERP(referencia string, db *gorm.DB) ItemsVentaErp {
 func GetPedidoERP(num int, db *gorm.DB) Response {
 	pedido := PedidoErp{}
 	db.Where("pvc_cot_num = ?", num).Limit(1).Find(&pedido)
-	detalle := []PedidoErpDet{}
+	detalle := []ResumenPedido{}
 	db.Where("pvc_cot_num = ?", num).Find(&detalle)
-	detallesItem := []ItemsVentaErp{}
-	detalleItem := ItemsVentaErp{}
-	for _, v := range detalle {
-		db.Where("ext1 = ? and referencia = ?", v.PvcDetExt1, v.PvcDetReferencia).First(&detalleItem)
-		detallesItem = append(detallesItem, detalleItem)
-	}
 	cliente := ClienteErp{}
 	db.Where("nit_tercero = ?", pedido.PvcDocID).First(&cliente)
 	punto := ClientesPuntosEnvioErp{}
 	db.Where("f215_rowid = ?", pedido.F215ID).First(&punto)
 	data := struct {
-		Pedido        PedidoErp
-		Detalle       []PedidoErpDet
-		DetallesItems []ItemsVentaErp
-		Cliente       ClienteErp
-		PuntoEnvio    ClientesPuntosEnvioErp
+		Pedido     PedidoErp
+		Detalle    []ResumenPedido
+		Cliente    ClienteErp
+		PuntoEnvio ClientesPuntosEnvioErp
 	}{
 		pedido,
 		detalle,
-		detallesItem,
 		cliente,
 		punto,
 	}
 	return Response{Payload: data, Message: "OK", Status: 200}
+}
+
+//GetPuntosEnvios fuc
+func GetPedidosUser(vendedorID string, nit string, db *gorm.DB) Response {
+	pedidos := []PedidoErp{}
+	if nit == "-1" {
+		db.Limit(100).Where("pvc_doc_vendedor = ?", vendedorID).Find(&pedidos)
+		return Response{Payload: pedidos, Message: "OK", Status: 200}
+	}
+	db.Limit(100).Where("pvc_doc_vendedor = ? AND pvc_doc_id LIKE ?", vendedorID, nit+"%").Find(&pedidos)
+	return Response{Payload: pedidos, Message: "OK", Status: 200}
 }

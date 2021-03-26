@@ -132,6 +132,37 @@ func enviarCorreo(correo string, tipoDoc string, nroDoc string, name string, las
 	return true
 }
 
+func enviarSolicitud(nit string, nombre string) bool {
+	from := "noreply-ventas@calzadoromulo.com.co"
+	pass := "Temporal.2021@"
+	to := "hernando.gaitan@integrapps.com "
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", from)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", "Creación de Cliente")
+	m.SetBody("text/html", fmt.Sprintf(`<!DOCTYPE html>
+	<style>
+		body {
+		   font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+		   font-weight: 300;
+		}
+	</style>
+	<html>
+		<body><p>Hola buen d&iacute;a,</p>
+	<p>El siguiente correo es para hacer una solicitud de ampliacion de cupo para el cliente %s identificado con el nit Nro. %s</p>
+	<p>Muchas Gracias,</p>
+	<p>PD: ajunto documentos</p></body>
+	</html>`, nombre, nit))
+
+	// Send the email to Bob
+	d := gomail.NewPlainDialer("smtpout.secureserver.net", 80, from, pass)
+	if err := d.DialAndSend(m); err != nil {
+		return false
+	}
+	return true
+}
+
 //CreateClient func
 func CreateClient(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
@@ -213,6 +244,36 @@ func SearchClient(db *gorm.DB) gin.HandlerFunc {
 	return fn
 }
 
+//RealizarSolicitudCupo realizar solicitud
+func RealizarSolicitudCupo(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		nit := c.Param("nit")
+		nombre := c.Param("nombre")
+		enviarSolicitud(nit, nombre)
+		c.JSON(200, gin.H{
+			"payload": "correo enviado",
+			"message": "correo enviado",
+			"status":  200,
+		})
+	}
+	return fn
+}
+
+//GetPedidosUser get all pedidos by seller
+func GetPedidosUser(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		nit := c.Param("nit")
+		vendedorID := c.Param("vendedorID")
+		response := handler.GetPedidosUser(vendedorID, nit, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
 //SearchItem func
 func SearchItem(db *gorm.DB) gin.HandlerFunc {
 	var item handler.ItemsVenta
@@ -278,7 +339,22 @@ func GetExt1(db *gorm.DB) gin.HandlerFunc {
 			})
 		}
 		list := c.Param("list")
-		response := handler.GetExt1(v, list, db)
+		bodega := c.Param("bodega")
+		response := handler.GetExt1(v, list, bodega, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetExt1 func
+func GetBodegas(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		userID := c.Param("userID")
+		response := handler.GetBodegas(userID, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
@@ -302,7 +378,8 @@ func GetExt2(db *gorm.DB) gin.HandlerFunc {
 		}
 		list := c.Param("list")
 		ext1 := c.Param("ext1")
-		response := handler.GetExt2(v, list, ext1, db)
+		bodega := c.Param("bodega")
+		response := handler.GetExt2(v, list, ext1, bodega, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
