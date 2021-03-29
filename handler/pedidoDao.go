@@ -13,30 +13,52 @@ import (
 )
 
 //SearchItem by desc
-func SearchItem(desc string, db *gorm.DB) Response {
-	items := []ItemsVenta{}
-	db.Where("descripcion_erp LIKE ? or f120_referencia LIKE ?", "%"+desc+"%", desc+"%").Order("descripcion_erp asc").Find(&items)
+func SearchItem(desc string, idListaPrecio string, userID int, db *gorm.DB) Response {
+	items := []ItemsVentaErp{}
+	bodegas := getBodegas(userID, db)
+	bodegasAux := []string{}
+	for i := 0; i < len(bodegas); i++ {
+		bodegasAux = append(bodegasAux, bodegas[i].F150ID)
+	}
+	db.Distinct("codigo_erp, referencia, descripcion").Where("f150_id in (?) and (descripcion LIKE ? or referencia LIKE ?)", bodegasAux, "%"+desc+"%", desc+"%").Order("descripcion asc").Find(&items)
 	return Response{Payload: items, Message: "OK", Status: 200}
 }
 
 //GetExt1 by cod
-func GetExt1(codigo int, idListaPrecio, bodega string, db *gorm.DB) Response {
+func GetExt1(codigo int, idListaPrecio string, userID int, db *gorm.DB) Response {
 	items := []ItemsVentaErp{}
-	db.Distinct("ext1, ext1_color").Where("codigo_erp = ? and id_lista_precio = ? and f150_id = ?", codigo, idListaPrecio, bodega).Find(&items)
+	bodegas := getBodegas(userID, db)
+	bodegasAux := []string{}
+	for i := 0; i < len(bodegas); i++ {
+		bodegasAux = append(bodegasAux, bodegas[i].F150ID)
+	}
+	db.Distinct("ext1, ext1_color").Where("codigo_erp = ? and id_lista_precio = ? and f150_id in (?)", codigo, idListaPrecio, bodegasAux).Find(&items)
 	return Response{Payload: items, Message: "OK", Status: 200}
 }
 
 //GetExt2 by cod
-func GetExt2(codigo int, idListaPrecio string, ext1 string, bodega string, db *gorm.DB) Response {
+func GetExt2(codigo int, idListaPrecio string, userID int, ext1 string, db *gorm.DB) Response {
 	items := []ItemsVentaErp{}
-	db.Where("codigo_erp = ? and id_lista_precio = ? and ext1 = ? and f150_id = ?", codigo, idListaPrecio, ext1, bodega).Find(&items)
+	bodegas := getBodegas(userID, db)
+	bodegasAux := []string{}
+	for i := 0; i < len(bodegas); i++ {
+		bodegasAux = append(bodegasAux, bodegas[i].F150ID)
+	}
+	db.Distinct("codigo_erp, referencia, ext2, existencia, precio_unt").Where("codigo_erp = ? and id_lista_precio = ? and ext1 = ? and f150_id in (?)", codigo, idListaPrecio, ext1, bodegasAux).Find(&items)
 	return Response{Payload: items, Message: "OK", Status: 200}
 }
 
-func GetBodegas(userID string, db *gorm.DB) Response {
+func getBodegas(userID int, db *gorm.DB) []appVendedorBodega {
 	bodegas := []appVendedorBodega{}
-	db.Where("f200_id like ?", userID+" %").Find(&bodegas)
-	return Response{Payload: bodegas, Message: "OK", Status: 200}
+	db.Where("f200_id = ?", userID).Find(&bodegas)
+	return bodegas
+}
+
+//GetPuntosEnvios fuc
+func GetBloqueoCupo(nit string, db *gorm.DB) Response {
+	puntos := []ClientesEstadoCupo{}
+	db.Where("nit = ?", nit).Find(&puntos)
+	return Response{Payload: puntos, Message: "OK", Status: 200}
 }
 
 //GetPuntosEnvios fuc

@@ -51,11 +51,21 @@ type ClientApp struct {
 
 //ClienteContactosErp struct
 type ClienteContactosErp struct {
-	NitCC     string
-	Direccion string
-	Email     string
-	Telefono  string
-	Celular   string
+	NitCC         string
+	Direccion     string
+	Email         string
+	Telefono      string
+	Celular       string
+	IDListaPrecio string
+}
+
+//ClientesVendedoresErp struct
+type ClientesVendedoresErp struct {
+	Nit           string
+	Cliente       string
+	RowIdVendedor int
+	IDSucursal    string
+	IDListaPrecio string
 }
 
 //ClienteErp struct
@@ -73,16 +83,18 @@ type ItemsVenta struct {
 
 //ItemsVentaErp Struct
 type ItemsVentaErp struct {
-	CodigoErp   int
-	Referencia  string
-	Descripcion string
-	Ext1        string
-	Ext2        string
-	PrecioUnt   float32
-	UndPrecio   string
-	Ext1Color   string
-	Existencia  float32
-	F150ID      string
+	CodigoErp     int
+	Referencia    string
+	Descripcion   string
+	Ext1          string
+	Ext2          string
+	PrecioUnt     float32
+	UndPrecio     string
+	Ext1Color     string
+	Existencia    float32
+	F150ID        string
+	IDListaPrecio string
+	F200ID        int
 }
 
 //ItemsExtension2 Struct
@@ -118,6 +130,12 @@ type PedidoErp struct {
 	PvcCenOper      string
 }
 
+//ClientesEstadoCupo Struct
+type ClientesEstadoCupo struct {
+	Nit         string
+	BloqueoCupo int
+}
+
 //Pedido Struct
 type Pedido struct {
 	InfoPedido    *PedidoErp
@@ -134,7 +152,7 @@ type PedidoErpDet struct {
 	PvcDetExt1         string
 	PvcDetExt2         string
 	PvcDetPrecioUnt    float32
-	PvcDetBodega       string
+	PvcDetListaPrecio  string
 }
 
 //ConsecPedido Struct

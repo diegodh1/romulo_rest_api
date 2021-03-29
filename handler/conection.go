@@ -24,7 +24,7 @@ func (c *Config) Init() {
 	c.User = os.Getenv("USER_APP")
 	c.Pass = os.Getenv("PASS_APP")
 	c.Port = os.Getenv("PORT_APP")
-	c.Database = os.Getenv("DATABASE_APP")
+	c.Database = "Integrapps_Pruebas"
 }
 
 //Connect to DB

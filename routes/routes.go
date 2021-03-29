@@ -233,8 +233,10 @@ func UpdateUser(db *gorm.DB) gin.HandlerFunc {
 func SearchClient(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		id := c.Param("id")
+		userID := c.Param("userID")
+		v, _ := strconv.Atoi(userID)
 		id = strings.ToUpper(strings.ReplaceAll(id, "%", " "))
-		response := handler.SearchClient(id, db)
+		response := handler.SearchClient(id, v, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
@@ -260,6 +262,20 @@ func RealizarSolicitudCupo(db *gorm.DB) gin.HandlerFunc {
 }
 
 //GetPedidosUser get all pedidos by seller
+func GetBloqueoCupo(db *gorm.DB) gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		nit := c.Param("nit")
+		response := handler.GetBloqueoCupo(nit, db)
+		c.JSON(response.Status, gin.H{
+			"payload": response.Payload,
+			"message": response.Message,
+			"status":  response.Status,
+		})
+	}
+	return fn
+}
+
+//GetPedidosUser get all pedidos by seller
 func GetPedidosUser(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		nit := c.Param("nit")
@@ -276,7 +292,7 @@ func GetPedidosUser(db *gorm.DB) gin.HandlerFunc {
 
 //SearchItem func
 func SearchItem(db *gorm.DB) gin.HandlerFunc {
-	var item handler.ItemsVenta
+	var item handler.ItemsVentaErp
 	fn := func(c *gin.Context) {
 		err := c.BindJSON(&item)
 		switch {
@@ -287,8 +303,8 @@ func SearchItem(db *gorm.DB) gin.HandlerFunc {
 				"status":  400,
 			})
 		default:
-			item.DescripcionErp = strings.ToUpper(item.DescripcionErp)
-			response := handler.SearchItem(item.DescripcionErp, db)
+			item.Descripcion = strings.ToUpper(item.Descripcion)
+			response := handler.SearchItem(item.Descripcion, item.IDListaPrecio, item.F200ID, db)
 			c.JSON(response.Status, gin.H{
 				"payload": response.Payload,
 				"message": response.Message,
@@ -339,22 +355,9 @@ func GetExt1(db *gorm.DB) gin.HandlerFunc {
 			})
 		}
 		list := c.Param("list")
-		bodega := c.Param("bodega")
-		response := handler.GetExt1(v, list, bodega, db)
-		c.JSON(response.Status, gin.H{
-			"payload": response.Payload,
-			"message": response.Message,
-			"status":  response.Status,
-		})
-	}
-	return fn
-}
-
-//GetExt1 func
-func GetBodegas(db *gorm.DB) gin.HandlerFunc {
-	fn := func(c *gin.Context) {
 		userID := c.Param("userID")
-		response := handler.GetBodegas(userID, db)
+		v2, _ := strconv.Atoi(userID)
+		response := handler.GetExt1(v, list, v2, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
@@ -378,8 +381,9 @@ func GetExt2(db *gorm.DB) gin.HandlerFunc {
 		}
 		list := c.Param("list")
 		ext1 := c.Param("ext1")
-		bodega := c.Param("bodega")
-		response := handler.GetExt2(v, list, ext1, bodega, db)
+		userID := c.Param("userID")
+		v2, _ := strconv.Atoi(userID)
+		response := handler.GetExt2(v, list, v2, ext1, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
