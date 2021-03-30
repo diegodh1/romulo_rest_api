@@ -66,6 +66,7 @@ type ClientesVendedoresErp struct {
 	RowIdVendedor int
 	IDSucursal    string
 	IDListaPrecio string
+	DocVendedor   string
 }
 
 //ClienteErp struct

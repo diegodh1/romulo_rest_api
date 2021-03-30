@@ -200,7 +200,7 @@ func GetPedidoERP(num int, db *gorm.DB) Response {
 	cliente := ClienteErp{}
 	db.Where("nit_tercero = ?", pedido.PvcDocID).First(&cliente)
 	punto := ClientesPuntosEnvioErp{}
-	db.Where("f215_rowid = ?", pedido.F215ID).First(&punto)
+	db.Where("f215_id = ? and nit = ?", pedido.F215ID, pedido.PvcDocID).First(&punto)
 	data := struct {
 		Pedido     PedidoErp
 		Detalle    []ResumenPedido
