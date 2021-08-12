@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"os"
 
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
@@ -20,10 +19,10 @@ type Config struct {
 
 //Init the db
 func (c *Config) Init() {
-	c.Server = os.Getenv("SERVER_APP")
-	c.User = os.Getenv("USER_APP")
-	c.Pass = os.Getenv("PASS_APP")
-	c.Port = os.Getenv("PORT_APP")
+	c.Server = "172.16.5.3"
+	c.User = "sa"
+	c.Pass = "AdminSQL.2019$"
+	c.Port = "1433"
 	c.Database = "Integrapps_Pruebas"
 }
 

@@ -10,7 +10,7 @@ import (
 func SearchClient(id string, userID int, db *gorm.DB) Response {
 	clients := []ClientesVendedoresErp{}
 	v := strconv.Itoa(userID)
-	db.Where("doc_vendedor = ? and (cliente LIKE ? or nit LIKE ?)", v, "%"+id+"%", id+"%").Find(&clients)
+	db.Distinct("cliente", "doc_vendedor", "nit", "id_lista_precio").Where("doc_vendedor = ? and (cliente LIKE ? or nit LIKE ?)", v, "%"+id+"%", id+"%").Find(&clients)
 	return Response{Payload: clients, Message: "OK", Status: 200}
 }
 

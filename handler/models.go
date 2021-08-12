@@ -96,6 +96,7 @@ type ItemsVentaErp struct {
 	F150ID        string
 	IDListaPrecio string
 	F200ID        int
+	ValorIva      float32
 }
 
 //ItemsExtension2 Struct
@@ -118,6 +119,17 @@ type ClientesPuntosEnvioErp struct {
 	PuntoEnvio     string
 	IDListaPrecio  string
 	F215ID         string
+}
+type SavePedidoResponse struct {
+	Consecutivo    int
+	CorreoCliente  string
+	CorreoVendedor string
+}
+
+type EmailsClientesVendedores struct {
+	NitCC         string
+	EmailContacto string
+	EmailVendedor string
 }
 
 //PedidoErp Struct
@@ -218,6 +230,9 @@ type ResumenPedido struct {
 	Total          float32
 	Fecha          string
 	PvcCotNum      int
+	ValorIva       float32
+	ValorConIva    float32
+	Iva            float32
 }
 
 //ResumenPedido struct

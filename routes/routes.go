@@ -69,7 +69,7 @@ func CreateUser(db *gorm.DB) gin.HandlerFunc {
 func enviarCorreo(correo string, tipoDoc string, nroDoc string, name string, lastName string, cellphone string, phone string, dir string, ciudad string, pais string, routesF []string) bool {
 	from := "noreply-ventas@calzadoromulo.com.co"
 	pass := "Temporal.2021@"
-	to := "hernando.gaitan@integrapps.com "
+	to := "alejandro.campuzano@calzadoromulo.com"
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", from)
@@ -122,11 +122,13 @@ func enviarCorreo(correo string, tipoDoc string, nroDoc string, name string, las
 		if err == nil {
 			m.Attach(routesF[i])
 		}
+		fmt.Println("attach ", err)
 	}
 
 	// Send the email to Bob
-	d := gomail.NewPlainDialer("smtpout.secureserver.net", 80, from, pass)
+	d := gomail.NewPlainDialer("smtpout.secureserver.net", 465, from, pass)
 	if err := d.DialAndSend(m); err != nil {
+		fmt.Println("send ", err.Error())
 		return false
 	}
 	return true
@@ -135,7 +137,7 @@ func enviarCorreo(correo string, tipoDoc string, nroDoc string, name string, las
 func enviarSolicitud(nit string, nombre string) bool {
 	from := "noreply-ventas@calzadoromulo.com.co"
 	pass := "Temporal.2021@"
-	to := "hernando.gaitan@integrapps.com "
+	to := "alejandro.campuzano@calzadoromulo.com"
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", from)
@@ -163,6 +165,36 @@ func enviarSolicitud(nit string, nombre string) bool {
 	return true
 }
 
+func enviarCorreoCreacionPedido(correo string, pedido int) bool {
+	from := "noreply-ventas@calzadoromulo.com.co"
+	pass := "Temporal.2021@"
+	to := correo
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", from)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", "Creacion de Pedido")
+	m.SetBody("text/html", fmt.Sprintf(`<!DOCTYPE html>
+	<style>
+		body {
+		   font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+		   font-weight: 300;
+		}
+	</style>
+	<html>
+		<body><p>Hola buen d&iacute;a,</p>
+	<p>El siguiente correo es para informar sobre la creación del pedido Nro %d.</p>
+	<p>Saludos!!,</p></body>
+	</html>`, pedido))
+
+	// Send the email to Bob
+	d := gomail.NewPlainDialer("smtpout.secureserver.net", 80, from, pass)
+	if err := d.DialAndSend(m); err != nil {
+		return false
+	}
+	return true
+}
+
 //CreateClient func
 func CreateClient(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
@@ -172,8 +204,8 @@ func CreateClient(db *gorm.DB) gin.HandlerFunc {
 		routesF := []string{}
 		for _, file := range files {
 			// Upload the file to specific dst.
-			c.SaveUploadedFile(file, "C:/profilePhotos/"+nroDoc+"-"+file.Filename)
-			routesF = append(routesF, "C:/profilePhotos/"+nroDoc+"-"+file.Filename)
+			c.SaveUploadedFile(file, "/home/tecnologia/Documents/archivos/"+nroDoc+"-"+file.Filename)
+			routesF = append(routesF, "/home/tecnologia/Documents/archivos/"+nroDoc+"-"+file.Filename)
 		}
 		tipoDoc := c.PostForm("tipoDoc")
 		name := c.PostForm("name")
@@ -480,6 +512,12 @@ func SavePedido(db *gorm.DB) gin.HandlerFunc {
 			})
 		default:
 			response := handler.SavePedidoErp(&pedido, db)
+			if response.Status == 201 {
+				pedidoResponse := response.Payload.(handler.SavePedidoResponse)
+				enviarCorreoCreacionPedido(pedidoResponse.CorreoCliente, pedidoResponse.Consecutivo)
+				enviarCorreoCreacionPedido(pedidoResponse.CorreoVendedor, pedidoResponse.Consecutivo)
+			}
+
 			c.JSON(response.Status, gin.H{
 				"payload": response.Payload,
 				"message": response.Message,
@@ -508,8 +546,7 @@ func GetItemsFotos(db *gorm.DB) gin.HandlerFunc {
 func GetCarteraCliente(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		nit := c.Param("nit")
-		sucursal := c.Param("sucursal")
-		response := handler.GetCarteraCliente(nit, sucursal, db)
+		response := handler.GetCarteraCliente(nit, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,
@@ -523,8 +560,7 @@ func GetCarteraCliente(db *gorm.DB) gin.HandlerFunc {
 func GetSaldoCliente(db *gorm.DB) gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		nit := c.Param("nit")
-		sucursal := c.Param("sucursal")
-		response := handler.GetSaldoCliente(nit, sucursal, db)
+		response := handler.GetSaldoCliente(nit, db)
 		c.JSON(response.Status, gin.H{
 			"payload": response.Payload,
 			"message": response.Message,

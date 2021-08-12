@@ -44,7 +44,7 @@ func GetExt2(codigo int, idListaPrecio string, userID int, ext1 string, db *gorm
 	for i := 0; i < len(bodegas); i++ {
 		bodegasAux = append(bodegasAux, bodegas[i].F150ID)
 	}
-	db.Distinct("codigo_erp, referencia, ext2, existencia, precio_unt").Where("codigo_erp = ? and id_lista_precio = ? and ext1 = ? and f150_id in (?)", codigo, idListaPrecio, ext1, bodegasAux).Find(&items)
+	db.Distinct("codigo_erp, referencia, ext2, existencia, precio_unt, valor_iva").Where("codigo_erp = ? and id_lista_precio = ? and ext1 = ? and f150_id in (?)", codigo, idListaPrecio, ext1, bodegasAux).Find(&items)
 	return Response{Payload: items, Message: "OK", Status: 200}
 }
 
@@ -96,7 +96,15 @@ func SavePedidoErp(pedido *Pedido, db *gorm.DB) Response {
 		saveDetallePedido(&v, consecutivo, db)
 	}
 	db.Model(ConsecPedido{}).Where("consecutivo_pedido = ?", consecutivo).Omit("Descripcion").Updates(ConsecPedido{ConsecutivoPedido: (consecutivo + 1)})
-	return Response{Payload: consecutivo, Message: "Registro Realizado! Pedido Nro: " + strconv.Itoa(consecutivo), Status: 201}
+	correos := getCorreosClienteYVendedor(pedido.InfoPedido.PvcDocID, db)
+	pedidoResponse := SavePedidoResponse{Consecutivo: consecutivo, CorreoCliente: correos.EmailContacto, CorreoVendedor: correos.EmailVendedor}
+	return Response{Payload: pedidoResponse, Message: "Registro Realizado! Pedido Nro: " + strconv.Itoa(consecutivo), Status: 201}
+}
+
+func getCorreosClienteYVendedor(nit string, db *gorm.DB) EmailsClientesVendedores {
+	correos := EmailsClientesVendedores{}
+	db.Where("nit_cc like ?", "%"+nit+"%").Find(&correos)
+	return correos
 }
 
 //saveDetallePedido func
@@ -122,23 +130,23 @@ func GetColecciones(db *gorm.DB) Response {
 }
 
 //GetCarteraCliente by nit and plac
-func GetCarteraCliente(nit string, sucursal string, db *gorm.DB) Response {
+func GetCarteraCliente(nit string, db *gorm.DB) Response {
 	carteras := []CarteraClientesErp{}
-	db.Where("nit = ? and id_sucursal = ?", nit, sucursal).Find(&carteras)
+	db.Where("nit = ?", nit).Find(&carteras)
 	return Response{Payload: carteras, Message: "OK", Status: 200}
 }
 
 //GetSaldoCliente by nit and plac
-func GetSaldoCliente(nit string, sucursal string, db *gorm.DB) Response {
+func GetSaldoCliente(nit string, db *gorm.DB) Response {
 	var saldo SucursalesErp
-	db.Where("nit_tercero = ? and f201_id_sucursal = ?", nit, sucursal).First(&saldo)
+	db.Where("nit_tercero = ?", nit).First(&saldo)
 	return Response{Payload: saldo, Message: "OK", Status: 200}
 }
 
 //GetFolders get all folder
 func GetFolders() Response {
 	folders := []string{}
-	files, err := ioutil.ReadDir("C:/catalogos")
+	files, err := ioutil.ReadDir("/home/tecnologia/Documentos/")
 	if err != nil {
 		return Response{Payload: folders, Message: "OK", Status: 200}
 	}
@@ -151,7 +159,7 @@ func GetFolders() Response {
 //GetPhotos get all photos
 func GetPhotos(folder string) Response {
 	folders := []string{}
-	files, err := ioutil.ReadDir("C:/catalogos/" + folder)
+	files, err := ioutil.ReadDir("/home/tecnologia/Documentos/" + folder)
 	if err != nil {
 		return Response{Payload: folders, Message: "OK", Status: 200}
 	}
@@ -164,7 +172,7 @@ func GetPhotos(folder string) Response {
 //GetPhotoBase64 photo base64
 func GetPhotoBase64(folder string, photo string, db *gorm.DB) Response {
 	// Open file on disk.
-	f, _ := os.Open("C:/catalogos/" + folder + "/" + photo)
+	f, _ := os.Open("/home/tecnologia/Documentos/" + folder + "/" + photo)
 
 	// Read entire JPG into byte slice.
 	reader := bufio.NewReader(f)
